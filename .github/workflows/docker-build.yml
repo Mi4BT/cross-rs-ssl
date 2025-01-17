@@ -1,0 +1,39 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up QEMU for cross-building
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Docker Hub
+      if: ${{ secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD }}
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        docker buildx build \
+          --platform linux/arm64 \
+          -t ${{ secrets.DOCKER_USERNAME }}/aarch64-unknown-linux-musl-ssl:latest \
+          -f dockers/Dockerfile.aarch64 \
+          . \
+          --push
